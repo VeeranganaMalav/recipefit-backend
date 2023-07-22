@@ -48,10 +48,66 @@ module.exports.createRecipe = async (req, res) => {
 
 // ------------------------------------------- FETCH ALL RECIPES ---------------------------------------------------
 module.exports.getRecipes = async (req, res) => {
+  // try {
+  //   const recipes = await Recipe.find();
+  //   res.status(200).send(recipes);
+  // } catch (err) {
+  //   res.status(500).send({ error: "Failed to fetch recipes" });
+  // }
+
+
+
   try {
-    const recipes = await Recipe.find();
-    res.status(200).send(recipes);
-  } catch (err) {
+    const { title, category, time, ingredient, sortBy, sortOrder, page, limit } = req.query;
+
+    console.log(req.query);
+
+    //create empty filter obj
+    let filter = {};
+
+    //apply search filters if provided
+    if (title) {
+      filter.$or = [
+        { title: { $regex: title, $options: 'i' } }
+      ]
+    }
+
+    //apply additional filters
+    if (category) {
+      filter.category = { $regex: category, $options: 'i' }
+    }
+
+    if (time) {
+      filter.time = { $regex: time, $options: 'i' }
+    }
+
+    if (ingredient) {
+      // filter.ingredients.ingredient = { $regex: ingredient, $options: 'i' }
+      filter.ingredients = { $elemMatch: { ingredient: { $regex: ingredient, $options: 'i' } } }
+    }
+
+    //create the sort object based on sortBy and sortOrder parameters
+    let sort = {};
+    if (sortBy && sortOrder) {
+      sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+    }
+
+    //pagination
+    const pageNumber = parseInt(page) || 1;
+    const pageSize = parseInt(limit) || 10;
+    const skip = (pageNumber - 1) * pageSize;
+
+    const recipe = await Recipe.find(filter)
+      .sort(sort)
+      .skip(skip)
+      .limit(pageSize);
+
+    const totalRecipeCount = await Recipe.countDocuments(filter);
+
+    res.json({ recipe: recipe, totalCount: totalRecipeCount });
+
+  }
+  catch (err) {
     res.status(500).send({ error: "Failed to fetch recipes" });
   }
 };
@@ -113,193 +169,193 @@ module.exports.deleteRecipe = async (req, res) => {
 };
 
 // ---------------------------------- FETCH RECIPES BY SEARCH TERM AND FILTERS -----------------------------------------
-module.exports.fetchRecipesBySearchTerm = async (req, res) => {
-  try {
-    const { userId } = req.params;
+// module.exports.fetchRecipesBySearchTerm = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
 
-    // const query = await Recipe.find({user: userId});
+//     // const query = await Recipe.find({user: userId});
 
-        let query = {};
+//         let query = {};
 
-        // query.user = userId;
+//         // query.user = userId;
 
-    if (req.query.title) {
-      query.title = { $regex: req.query.title, $options: "i" };
-    }
+//     if (req.query.title) {
+//       query.title = { $regex: req.query.title, $options: "i" };
+//     }
 
-        if(req.query.time){
-            query.time = { $in: ["10 mins", "15 mins", "20 mins", "25 mins", "30 mins", "35 mins", "40 mins", "60 mins"] }
-        }
+//         if(req.query.time){
+//             query.time = { $in: ["10 mins", "15 mins", "20 mins", "25 mins", "30 mins", "35 mins", "40 mins", "60 mins"] }
+//         }
 
-    if (req.query.categories.length > 0) {
-      query.categories = {
-        $in: [
-          "main",
-          "dessert",
-          "breakfast",
-          "salad",
-          "snack",
-          "sandwiches",
-          "soup",
-          "drink",
-          "appetizer",
-          "smoothie",
-          "side",
-          "spread",
-          "homemade staple",
-        ],
-      };
-    }
+//     if (req.query.categories.length > 0) {
+//       query.categories = {
+//         $in: [
+//           "main",
+//           "dessert",
+//           "breakfast",
+//           "salad",
+//           "snack",
+//           "sandwiches",
+//           "soup",
+//           "drink",
+//           "appetizer",
+//           "smoothie",
+//           "side",
+//           "spread",
+//           "homemade staple",
+//         ],
+//       };
+//     }
 
-    if (req.query.ingredients.length > 0) {
-      query.ingredients = {
-        $in: [
-          "alfalfa sprouts",
-          "all-purpose flour",
-          "almonds",
-          "apple",
-          "apricot",
-          "artichoke",
-          "arugula",
-          "asparagus",
-          "avocado",
-          "banana",
-          "beans",
-          "beet",
-          "bell pepper",
-          "berries",
-          "Blackberries",
-          "blueberries",
-          "bok choy",
-          "bread",
-          "broccoli",
-          "Brussels sprouts",
-          "cabbage",
-          "Capers",
-          "carrots",
-          "cashews",
-          "cauliflower",
-          "celeriac",
-          "celery",
-          "cherry",
-          "chia seeds",
-          "chickpea",
-          "chili pepper",
-          "chocolate",
-          "cilantro",
-          "coconut",
-          "coffee",
-          "corn",
-          "cranberries",
-          "cucumber",
-          "dates",
-          "Dragon fruit",
-          "edamame",
-          "eggplant",
-          "endive",
-          "fennel",
-          "fig",
-          "flaxseeds",
-          "fresh basil",
-          "fresh chives",
-          "fresh curry leaves",
-          "fresh dill",
-          "fresh fenugreek",
-          "fresh mint",
-          "fresh parsley",
-          "fresh rosemary",
-          "fresh sage",
-          "fresh tarragon",
-          "fresh thyme",
-          "garlic",
-          "ginger",
-          "goji berries",
-          "grapefruit",
-          "grapes",
-          "hazelnuts",
-          "hemp seeds",
-          "honeydew melon",
-          "hummus",
-          "jack fruit",
-          "kale",
-          "kiwi",
-          "Kohlrabi",
-          "leek",
-          "lemon",
-          "lemongrass",
-          "lentils",
-          "lettuce",
-          "lime",
-          "lychee",
-          "mango",
-          "mushrooms",
-          "mustard greens",
-          "nectarine",
-          "oats",
-          "oil",
-          "olives",
-          "onion",
-          "orange",
-          "Passion fruit",
-          "pasta",
-          "peaches",
-          "peanuts",
-          "pear",
-          "peas",
-          "pecans",
-          "persimmon",
-          "pickle",
-          "pineapple",
-          "pine nuts",
-          "pistachios",
-          "plantain",
-          "plant cheese",
-          "plant milk",
-          "plant yogurt",
-          "pomegranate",
-          "potato",
-          "pumpkin",
-          "pumpkin seeds",
-          "quinoa",
-          "radish",
-          "raisins",
-          "raspberries",
-          "rhubarb",
-          "rice",
-          "sesame seed",
-          "shallot",
-          "spinach",
-          "squash",
-          "squash seeds",
-          "strawberries",
-          "sugar",
-          "sunflower seeds",
-          "sweet potato",
-          "tahini",
-          "tea",
-          "tempeh",
-          "tofu",
-          "tomato",
-          "vegan butter",
-          "vinegar",
-          "walnuts",
-          "watermelon",
-          "zucchini",
-        ],
-      };
-    }
+//     if (req.query.ingredients.length > 0) {
+//       query.ingredients = {
+//         $in: [
+//           "alfalfa sprouts",
+//           "all-purpose flour",
+//           "almonds",
+//           "apple",
+//           "apricot",
+//           "artichoke",
+//           "arugula",
+//           "asparagus",
+//           "avocado",
+//           "banana",
+//           "beans",
+//           "beet",
+//           "bell pepper",
+//           "berries",
+//           "Blackberries",
+//           "blueberries",
+//           "bok choy",
+//           "bread",
+//           "broccoli",
+//           "Brussels sprouts",
+//           "cabbage",
+//           "Capers",
+//           "carrots",
+//           "cashews",
+//           "cauliflower",
+//           "celeriac",
+//           "celery",
+//           "cherry",
+//           "chia seeds",
+//           "chickpea",
+//           "chili pepper",
+//           "chocolate",
+//           "cilantro",
+//           "coconut",
+//           "coffee",
+//           "corn",
+//           "cranberries",
+//           "cucumber",
+//           "dates",
+//           "Dragon fruit",
+//           "edamame",
+//           "eggplant",
+//           "endive",
+//           "fennel",
+//           "fig",
+//           "flaxseeds",
+//           "fresh basil",
+//           "fresh chives",
+//           "fresh curry leaves",
+//           "fresh dill",
+//           "fresh fenugreek",
+//           "fresh mint",
+//           "fresh parsley",
+//           "fresh rosemary",
+//           "fresh sage",
+//           "fresh tarragon",
+//           "fresh thyme",
+//           "garlic",
+//           "ginger",
+//           "goji berries",
+//           "grapefruit",
+//           "grapes",
+//           "hazelnuts",
+//           "hemp seeds",
+//           "honeydew melon",
+//           "hummus",
+//           "jack fruit",
+//           "kale",
+//           "kiwi",
+//           "Kohlrabi",
+//           "leek",
+//           "lemon",
+//           "lemongrass",
+//           "lentils",
+//           "lettuce",
+//           "lime",
+//           "lychee",
+//           "mango",
+//           "mushrooms",
+//           "mustard greens",
+//           "nectarine",
+//           "oats",
+//           "oil",
+//           "olives",
+//           "onion",
+//           "orange",
+//           "Passion fruit",
+//           "pasta",
+//           "peaches",
+//           "peanuts",
+//           "pear",
+//           "peas",
+//           "pecans",
+//           "persimmon",
+//           "pickle",
+//           "pineapple",
+//           "pine nuts",
+//           "pistachios",
+//           "plantain",
+//           "plant cheese",
+//           "plant milk",
+//           "plant yogurt",
+//           "pomegranate",
+//           "potato",
+//           "pumpkin",
+//           "pumpkin seeds",
+//           "quinoa",
+//           "radish",
+//           "raisins",
+//           "raspberries",
+//           "rhubarb",
+//           "rice",
+//           "sesame seed",
+//           "shallot",
+//           "spinach",
+//           "squash",
+//           "squash seeds",
+//           "strawberries",
+//           "sugar",
+//           "sunflower seeds",
+//           "sweet potato",
+//           "tahini",
+//           "tea",
+//           "tempeh",
+//           "tofu",
+//           "tomato",
+//           "vegan butter",
+//           "vinegar",
+//           "walnuts",
+//           "watermelon",
+//           "zucchini",
+//         ],
+//       };
+//     }
 
-    await Recipe.find(query)
-      .exec()
-      .then((recipes) => {
-        console.log(recipes);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+//     await Recipe.find(query)
+//       .exec()
+//       .then((recipes) => {
+//         console.log(recipes);
+//       })
+//       .catch((err) => {
+//         console.log(err);
+//       });
 
-    // res.status(200).send();
-  } catch (err) {
-    res.status(500).send({ error: "Failed to fetch the recipes" });
-  }
-};
+//     // res.status(200).send();
+//   } catch (err) {
+//     res.status(500).send({ error: "Failed to fetch the recipes" });
+//   }
+// };
