@@ -38,9 +38,7 @@ module.exports.createRecipe = async (req, res) => {
     validUser.recipes.push(recipe._id);
     await validUser.save();
 
-    res
-      .status(201)
-      .send({ message: "Recipe created successfully", recipe: recipe });
+    res.status(201).send({ message: "Recipe created successfully", recipe: recipe });
   } catch (err) {
     res.status(500).send({ error: "Failed to create recipe" });
   }
@@ -142,9 +140,7 @@ module.exports.updateRecipe = async (req, res) => {
       res.status(404).send({ error: "Recipe not found" });
     }
 
-    res
-      .status(200)
-      .send({ message: "Recipe updated successfully", recipe: updatedRecipe });
+    res.status(200).send({ message: "Recipe updated successfully", recipe: updatedRecipe });
   } catch (err) {
     res.status(500).send({ error: "Failed to update recipe" });
   }
@@ -162,7 +158,7 @@ module.exports.deleteRecipe = async (req, res) => {
       return;
     }
 
-    res.send({ message: "Recipe deleted successfully", recipe: deletedRecipe });
+    res.status(200).send({ message: "Recipe deleted successfully", recipe: deletedRecipe });
   } catch (err) {
     res.status(500).send({ error: "Failed to delete recipe" });
   }
